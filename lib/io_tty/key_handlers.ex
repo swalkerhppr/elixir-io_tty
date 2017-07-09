@@ -4,7 +4,8 @@ defmodule IOTty.KeyHandlers do
   """
   use GenServer
 
-  def start_link(),   do: GenServer.start_link(__MODULE__, default_config(), name: :key_handlers) 
+  def start_link(),       do: GenServer.start_link(__MODULE__, default_config(), name: :key_handlers) 
+  def start_link(:debug), do: GenServer.start_link(__MODULE__, debug_config(), name: :key_handlers) 
   def start_link(config), do: GenServer.start_link(__MODULE__, config, name: :key_handlers)
 
   def handle_key(key, state) do
@@ -43,6 +44,13 @@ defmodule IOTty.KeyHandlers do
       @bksp => &handle_del/2,
       :default => &handle_char/2,
      }
+  end
+
+  defp debug_config() do
+    %{
+      :initial_state => {}
+      :default => &(IO.write(&1))
+    }
   end
 
   defp handle_fw(@fw, {input, cursor}) do
