@@ -13,6 +13,12 @@ For command line applications using escript add `emu_args: "-elixir ansi_enabled
 To enable forward and back keys in your application configuration add `worker(IOTty, [])` to your application children and use IOTty.gets to get strings.
 This will load default callbacks on each key to make it so that forward and back keys work.
 
+There are 3 modes to use this module:
+
+  - default -- use worker(IOTty, []) to start. Enables the use of left and right arrow keys
+  - debug -- use worker(IOTty, [:debug]) to start. Shows the key values that are pressed.
+  - custom -- use worker(IOTty, [my_func_callback_map]). Defines a custom behaviour using callbacks. See below.
+
 ## Callbacks
 
 You may also define callbacks to be called instead of the default behaviour.
