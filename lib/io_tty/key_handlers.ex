@@ -38,19 +38,24 @@ defmodule IOTty.KeyHandlers do
   defp default_config() do
     %{
       :initial_state => {"", 0},
+      :default => &handle_char/2,
       @fw => &handle_fw/2,
       @bk => &handle_bk/2,
       @ret => &handle_ret/2,
       @bksp => &handle_del/2,
-      :default => &handle_char/2,
      }
   end
 
   defp debug_config() do
     %{
-      :initial_state => {}
-      :default => &(IO.write(&1))
-    }
+      :initial_state => {},
+      :default      => &handle_debug/2
+     }
+   end
+
+  defp handle_debug(key, state) do
+    IO.puts("KEY: #{inspect key}\e[E")
+    state
   end
 
   defp handle_fw(@fw, {input, cursor}) do
