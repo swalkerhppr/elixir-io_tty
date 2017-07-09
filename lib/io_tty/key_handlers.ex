@@ -34,15 +34,14 @@ defmodule IOTty.KeyHandlers do
   @bk "\e[D"
   @ret "\r"
   @bksp "\d"
+  @del "\e[3~"
+  @home "\e[H"
+  @enk  "\e[F"
 
   defp default_config() do
     %{
       :initial_state => {"", 0},
-      :default => &handle_char/2,
-      @fw => &handle_fw/2,
-      @bk => &handle_bk/2,
-      @ret => &handle_ret/2,
-      @bksp => &handle_del/2,
+      :default => &handle_press/2,
      }
   end
 
@@ -58,7 +57,7 @@ defmodule IOTty.KeyHandlers do
     state
   end
 
-  defp handle_fw(@fw, {input, cursor}) do
+  defp handle_press(@fw, {input, cursor}) do
     if String.length(input) >= cursor + 1 do
       IO.write(@fw)
       {input, cursor+1}
@@ -66,7 +65,7 @@ defmodule IOTty.KeyHandlers do
       {input, cursor}
     end
   end
-  defp handle_bk(@bk, {input, cursor}) do
+  defp handle_press(@bk, {input, cursor}) do
     case cursor do
       0 -> 
         {input, cursor}
@@ -75,12 +74,12 @@ defmodule IOTty.KeyHandlers do
         {input, cursor-1}
     end
   end
-  defp handle_ret(@ret, {input, _}) do
+  defp handle_press(@ret, {input, _}) do
     IO.write("\n\e[E")
     {:stop_and_send, input}
   end
 
-  defp handle_del(@bksp, {input, cursor}) do
+  defp handle_press(@bksp, {input, cursor}) do
     {pre, post} = cut(input, cursor)
     IO.write(@bk <> "\e[K" <> post <> back_up(post))
     case cursor do
@@ -91,12 +90,33 @@ defmodule IOTty.KeyHandlers do
     end
   end
 
-  defp handle_char(<< b >>, {input, cursor}) when b in 32..126 do
+  defp handle_press(@del, {input, cursor}) do
+    {pre, post} = cut(input, cursor)
+    IO.write("\e[K" <> post <> back_up(post))
+    case cursor do
+      0 -> 
+        {pre <> String.slice(post, 1..-1) , 0}
+      _ ->
+        {pre <> String.slice(post, 1..-1) , cursor}
+    end
+  end
+
+  defp handle_press(@home, {input, _}) do
+    IO.write("\e[u")
+    {input, 0}
+  end
+
+  defp handle_press(@enk, {input, _}) do
+    IO.write("\e[u" <> String.duplicate(@fw, String.length(input)))
+    {input, String.length(input) - 1}
+  end
+
+  defp handle_press(<< b >>, {input, cursor}) when b in 32..126 do
     {pre, post} = cut(input, cursor)
     IO.write(<< b >> <> post <> back_up(post))
     {pre <> << b >> <> post, cursor+1}
   end
-  defp handle_char(_, state), do: state
+  defp handle_press(_, state), do: state
 
   defp cut(input, cursor), do: {String.slice(input, 0..cursor-1), String.slice(input, cursor..-1)}
   defp back_up(string), do: String.duplicate(@bk, String.length(string))

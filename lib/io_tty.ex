@@ -15,7 +15,7 @@ defmodule IOTty do
     Replacement for IO.gets Gets a string from input. Doesn't take a device.
   """
   def gets(prompt) do
-    IO.write(prompt)
+    IO.write(prompt <> "\e[s")
     wait_for_input({:gets, self()})
   end
 
