@@ -6,9 +6,13 @@ defmodule IOTty do
 
 
   @doc """
-    Start the key handlers. config should be a map of key values with callbacks, :debug or empty.
+    Start the key handlers. config should be a map of key values with callbacks, :debug, :default, :disable or empty.
   """
-  def start_link(config \\ :default) do
+  def start_link(config \\ :default)
+  def start_link(:disable) do
+     {:ok, self()}
+  end
+  def start_link(config) do
     IOTty.KeyHandlers.start_link(config)
     start_port()
   end
