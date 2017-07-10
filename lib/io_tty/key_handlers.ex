@@ -102,7 +102,7 @@ defmodule IOTty.KeyHandlers do
   end
   defp handle_press(@ret, state = {input, _}) do
     IO.write("\n\e[E")
-    {:new_line, input, {"", 0}}
+    {:send_line, input, {"", 0}}
   end
 
   defp handle_press(@bksp, {input, cursor}) do

@@ -41,7 +41,7 @@ If the key is not found in the callback map, :default is called.
 If :default does not exist, nothing will happen.
 State should contain anything to be held between key presses.
 The initial state is determined by the `:initial_state` key in the callback map.
-A callback can also return `{:stop_and_send, output}` which stops input and sends the variable back to the calling process.
+A callback can also return `{:send_line, output, state}` which sends output back to the calling process.
 
 For example, here are the default callbacks for handling printable characters and the return key:
 ```

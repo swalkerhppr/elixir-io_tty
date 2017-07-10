@@ -33,7 +33,7 @@ defmodule IOTty do
     receive do
       {_port, {:data, key}} ->  
         case handle_key(key, state) do
-          {:send, output, new_state} -> 
+          {:send_line, output, new_state} -> 
             send reply_to, {:reply, output}
             handle_msgs(new_state, nil)
           new_state ->
