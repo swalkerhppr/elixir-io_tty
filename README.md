@@ -11,7 +11,7 @@ Add `:io_tty, git: "https://github.com/swalker90/elixir-io_tty.git" tag: "v0.1` 
 For command line applications using escript add `emu_args: "-elixir ansi_enabled true -noinput"` to your escript definition.
 
 To enable forward and back keys in your application configuration add `worker(IOTty, [])` to your application children and use IOTty.gets to get strings.
-This will load default callbacks to handle each key when doing a IOTty.gets to make it so that forward, back, end and home keys work like a cli aplication.
+This will load default callbacks to handle each key when doing a IOTty.gets to make it so that forward, back, up, down, end and home keys work like an interactive command line application.
 
 There are 3 modes to use this module:
 
