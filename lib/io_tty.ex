@@ -8,30 +8,53 @@ defmodule IOTty do
   @doc """
     Start the key handlers. config should be a map of key values with callbacks, or :cli 
   """
-  def start_link(), do: IOTty.KeyHandlers.start_link()
-  def start_link(config), do: IOTty.KeyHandlers.start_link(config)
+  def start_link(config \\ :default) do
+    IOTty.KeyHandlers.start_link(config)
+    start_port()
+  end
 
   @doc """
     Replacement for IO.gets Gets a string from input. Doesn't take a device.
   """
   def gets(prompt) do
-    IO.write(prompt <> "\e[s")
+    IO.write( prompt <> "\e[s")
     wait_for_input({:gets, self()})
   end
 
+  @doc """
+    Replacement for IO.puts displays a string. Necessary to reset the ansi state
+  """
+  def puts(string) do
+    IO.write("\e[E" <> string <> "\n\e[E")
+  end
+
+  @doc """
+    Alias for IO.write. Doesn't reset the cursor position
+  """
+  def puts(string) do
+    IO.write(string)
+  end
+
+
   defp handle_msgs(state \\ IOTty.KeyHandlers.get_initial_state(), reply_to \\ nil) do
     receive do
-      {port, {:data, key}} ->  
+      {_port, {:data, key}} ->  
         case handle_key(key, state) do
-          {:stop_and_send, output} -> 
+          {:stop_and_send, output, new_state} -> 
             send reply_to, {:reply, output}
-            Port.close(port)
-            {:EXIT, self(), :normal}
+            handle_msgs(new_state, nil)
           new_state ->
             handle_msgs(new_state, reply_to)
         end
       {:gets, caller} -> handle_msgs(state, caller)
     end
+  end
+
+  defp start_port do
+    pid = Port.open({:spawn, "tty_sl -c -e"}, [:binary, :eof])
+    |> start_receiver()
+    Process.register(pid, :input_receiver)
+    {:ok, pid}
   end
   
   defp handle_key(char_data, state) do
@@ -39,8 +62,7 @@ defmodule IOTty do
   end
 
   defp wait_for_input(args) do
-    pid = Port.open({:spawn, "tty_sl -c -e"}, [:binary, :eof]) |> start_receiver()
-    send pid, args
+    send :input_receiver, args
     receive do
       {:reply, d} -> d 
     end
