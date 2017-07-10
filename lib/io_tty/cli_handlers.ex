@@ -25,6 +25,31 @@ defmodule IOTty.CLIHandlers do
      }
   end
 
+  defp handle_press(@up, state = %State{input: input, history: history, helem: helem}) do
+    new_elem = Enum.at(history, helem - 1, nil)
+    len = length(history)  
+    case helem do
+      0 -> 
+        state
+      ^len ->
+        IO.write("\e[u\e[K" <> new_elem)
+        %{state | input: new_elem, cursor: String.length(new_elem), helem: helem - 1, history: add_not_empty(history, input)}
+      _ -> 
+        IO.write("\e[u\e[K" <> new_elem)
+        %{state | input: new_elem, cursor: String.length(new_elem), helem: helem - 1}
+    end
+  end
+  defp handle_press(@dn, state = %State{history: history, helem: helem}) do
+    new_elem = Enum.at(history, helem + 1, "")
+    len = length(history)  
+    case helem do
+      ^len ->
+        state
+      _ -> 
+        IO.write("\e[u\e[K" <> new_elem)
+        %{state | input: new_elem, cursor: String.length(new_elem), helem: helem + 1}
+    end
+  end
   defp handle_press(@fw, state = %State{input: input, cursor: cursor}) do
     if String.length(input) >= cursor + 1 do
       IO.write(@fw)
@@ -44,9 +69,9 @@ defmodule IOTty.CLIHandlers do
     end
   end
 
-  defp handle_press(@ret, state = %State{input: input}) do
+  defp handle_press(@ret, state = %State{input: input, history: history, helem: helem}) do
     IO.write("\n\e[E")
-    {:send_line, input, %{state | input: "", cursor: 0}}
+    {:send_line, input, %{state | input: "", cursor: 0, history: history ++ [input], helem: helem + 1}}
   end
 
   defp handle_press(@bksp, state = %State{input: input, cursor: cursor}) do
@@ -86,6 +111,10 @@ defmodule IOTty.CLIHandlers do
 
   defp cut(input, cursor) when cursor == 0, do: {"", input}
   defp cut(input, cursor), do: {String.slice(input, 0..cursor-1), String.slice(input, cursor..-1)}
+
   defp back_up(string), do: String.duplicate(@bk, String.length(string))
+
+  defp add_not_empty(list, ""),     do: list
+  defp add_not_empty(list, string), do: list ++ [string]
 
 end
