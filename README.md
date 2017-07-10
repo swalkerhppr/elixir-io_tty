@@ -1,23 +1,28 @@
 # elixir-io_tty
 
-Elixir module to handle key presses from the terminal in elixir.
+Elixir module to handle key presses from the terminal in elixir when using gets.
 It uses tty_sl to handle input.
 
-THIS MODULE IS STILL IN DEVELOPMENT
+If you find any bugs or have feature requests, I am open to pull requests or let me know and I can look into it.
 
 ## Usage
 
-Add `:io_tty, git: "https://github.com/swalker90/elixir-io_tty.git" ` to your deps in mix.exs
+Add `:io_tty, git: "https://github.com/swalker90/elixir-io_tty.git" tag: "v0.1` to your deps in mix.exs
 For command line applications using escript add `emu_args: "-elixir ansi_enabled true -noinput"` to your escript definition.
 
 To enable forward and back keys in your application configuration add `worker(IOTty, [])` to your application children and use IOTty.gets to get strings.
-This will load default callbacks on each key to make it so that forward and back keys work.
+This will load default callbacks to handle each key when doing a IOTty.gets to make it so that forward, back, end and home keys work like a cli aplication.
 
 There are 3 modes to use this module:
 
-  - default -- use worker(IOTty, []) to start. Enables the use of left and right arrow keys
-  - debug -- use worker(IOTty, [:debug]) to start. Shows the key values that are pressed.
+  - default -- use worker(IOTty, []). Enables the use of left and right arrow keys
+  - debug -- use worker(IOTty, [:debug]). Shows the key values that are pressed.
   - custom -- use worker(IOTty, [my_func_callback_map]). Defines a custom behaviour using callbacks. See below.
+
+Only gets and puts are implemented.
+
+Trying to use it while in an IEX session will give errors, because it is already using tty_sl to handle input/output.
+This module provides the functionality to use tty_sl outside of IEX.
 
 ## Callbacks
 
@@ -32,6 +37,8 @@ The callback map is formatted in the following way:
 ```
 
 Each callback takes the key pressed and a state and returns the modified state.
+If the key is not found in the callback map, :default is called.
+If :default does not exist, nothing will happen.
 State should contain anything to be held between key presses.
 The initial state is determined by the `:initial_state` key in the callback map.
 A callback can also return `{:stop_and_send, output}` which stops input and sends the variable back to the calling process.
@@ -51,3 +58,21 @@ For example, here are the default callbacks for handling printable characters an
 ```
 
 where the state is a tuple of `{input, cursor}` where `input` is the input characters so far and `cursor` is the cursor position.
+
+Note: When io_tty is active, input will not be output to the screen. _Pressing a key will only trigger the assigned callback._
+In other words, callbacks are responsible for outputing keys to the screen.
+
+## Output
+
+Mixing `IO.puts` and `IOTty.gets` results in strange output.
+When using `IO.puts` with IOTty, the new line is interpreted as "move to the next line" and not "move to the start of the next line".
+This can cause output to look a like this:
+```
+First Line
+          Second Line
+                     Third Line
+```
+To fix this, use `IOTty.puts` instead of `IO.puts`.
+`IOTty.puts` changes the new line character to move to the first start of the next line.
+
+If you would like to format input yourself, use ASCI control characters with the built in `IO.write` 

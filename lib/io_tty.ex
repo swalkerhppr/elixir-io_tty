@@ -6,7 +6,7 @@ defmodule IOTty do
 
 
   @doc """
-    Start the key handlers. config should be a map of key values with callbacks, or :cli 
+    Start the key handlers. config should be a map of key values with callbacks, :debug or empty.
   """
   def start_link(config \\ :default) do
     IOTty.KeyHandlers.start_link(config)
@@ -14,33 +14,26 @@ defmodule IOTty do
   end
 
   @doc """
-    Replacement for IO.gets Gets a string from input. Doesn't take a device.
+    Replacement for IO.gets. Gets a string from stdio
   """
   def gets(prompt) do
-    IO.write( prompt <> "\e[s")
+    IO.write(prompt <> "\e[s")
     wait_for_input({:gets, self()})
   end
 
   @doc """
-    Replacement for IO.puts displays a string. Necessary to reset the ansi state
+    Replacement for IO.puts displays a string.
+    Makes sure that the cursor is at the beginning of the line after each new line
   """
   def puts(string) do
-    IO.write("\e[E" <> string <> "\n\e[E")
+    IO.write("\e[E" <> String.replace(string, "\n", "\n\e[E") <> "\n\e[E")
   end
-
-  @doc """
-    Alias for IO.write. Doesn't reset the cursor position
-  """
-  def puts(string) do
-    IO.write(string)
-  end
-
 
   defp handle_msgs(state \\ IOTty.KeyHandlers.get_initial_state(), reply_to \\ nil) do
     receive do
       {_port, {:data, key}} ->  
         case handle_key(key, state) do
-          {:stop_and_send, output, new_state} -> 
+          {:send, output, new_state} -> 
             send reply_to, {:reply, output}
             handle_msgs(new_state, nil)
           new_state ->
