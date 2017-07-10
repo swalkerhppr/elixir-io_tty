@@ -45,19 +45,20 @@ A callback can also return `{:send_line, output, state}` which sends output back
 
 For example, here are the default callbacks for handling printable characters and the return key:
 ```
-  defp handle_ret("\r", {input, _}) do
+  defp handle_press(@ret, state = %State{input: input, history: history, helem: helem}) do
     IO.write("\n\e[E")
-    {:stop_and_send, input}
+    {:send_line, input, %{state | input: "", cursor: 0, history: history ++ [input], helem: helem + 1}}
   end
 
-  defp handle_char(<< b >>, {input, cursor}) when b in 32..126 do
+  defp handle_press(<< b >>, state = %State{input: input, cursor: cursor})
+    when b in 32..126 do
     {pre, post} = cut(input, cursor)
-    IO.write(<< b >> <> post <> back_up(post))
-    {pre <> << b >> <> post, cursor+1}
+    IO.write(<< b >> <> "\e[K" <> post <> back_up(post))
+    %{state | input: pre <> << b >> <> post, cursor: cursor+1}
   end
 ```
 
-where the state is a tuple of `{input, cursor}` where `input` is the input characters so far and `cursor` is the cursor position.
+where the state map of input, cursor position, history and where in the history you are.
 
 Note: When io_tty is active, input will not be output to the screen. _Pressing a key will only trigger the assigned callback._
 In other words, callbacks are responsible for outputing keys to the screen.

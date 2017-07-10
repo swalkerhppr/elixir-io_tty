@@ -69,9 +69,9 @@ defmodule IOTty.CLIHandlers do
     end
   end
 
-  defp handle_press(@ret, state = %State{input: input, history: history, helem: helem}) do
+  defp handle_press(@ret, state = %State{input: input, history: history}) do
     IO.write("\n\e[E")
-    {:send_line, input, %{state | input: "", cursor: 0, history: history ++ [input], helem: helem + 1}}
+    {:send_line, input, %{state | input: "", cursor: 0, history: history ++ [input], helem: length(history)}}
   end
 
   defp handle_press(@bksp, state = %State{input: input, cursor: cursor}) do
