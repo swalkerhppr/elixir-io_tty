@@ -2,13 +2,10 @@ defmodule IOTtyTest.CLITest do
   use ExUnit.Case, async: false
   use IOTty.Keys
 
-  @written_output Application.get_env(:io_tty, :debug_out_file)
   @start_string "hello"
   alias IOTty.CLIHandlers, as: State
 
   setup do
-    File.rm(@written_output)
-    File.write(@written_output, @start_string)
     IOTty.KeyHandlers.start_link(:default)
     :ok
   end
@@ -101,10 +98,6 @@ defmodule IOTtyTest.CLITest do
 
   defp handle_key(key, state) do
     IOTty.KeyHandlers.handle_key(key, state)
-  end
-
-  defp output do
-    File.read!(@written_output)
   end
 
 end
