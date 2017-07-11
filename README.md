@@ -7,7 +7,7 @@ If you find any bugs or have feature requests, I am open to pull requests or let
 
 ## Usage
 
-Add `:io_tty, git: "https://github.com/swalker90/elixir-io_tty.git", tag: "v0.1.1"` to your deps in mix.exs
+Add `:io_tty, git: "https://github.com/swalker90/elixir-io_tty.git", tag: "v1.0.0"` to your deps in mix.exs
 For command line applications using escript add `emu_args: "-elixir ansi_enabled true -noinput"` to your escript definition.
 
 To enable forward and back keys in your application configuration add `worker(IOTty, [])` to your application children and use IOTty.gets to get strings.

@@ -20,3 +20,4 @@ erl_crash.dump
 *.ez
 
 test_output.txt
+mix.lock
